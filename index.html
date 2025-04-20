@@ -1,622 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Image & Video Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-..."
+        crossorigin="anonymous">
     <style>
-        /* Custom scrollbar */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+        /* Include existing styles */
+        :root {
+            --gradient-bg-start: #f3f4f6;
+            --gradient-bg-end: #e5e7eb;
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-        
-        /* Typing animation */
-        .typing-indicator span {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #6b7280;
-            margin: 0 2px;
-            animation: bounce 1.4s infinite ease-in-out;
-        }
-        
-        .typing-indicator span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        
-        .typing-indicator span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        
-        @keyframes bounce {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-5px); }
-        }
-        
-        /* Message fade-in */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .message-animation {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
-        
-        /* Gradient background */
+
         .gradient-bg {
-            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            background: linear-gradient(135deg, var(--gradient-bg-start) 0%, var(--gradient-bg-end) 100%);
         }
-        
-        /* Image placeholder shimmer */
-        @keyframes shimmer {
-            0% { background-position: -468px 0 }
-            100% { background-position: 468px 0 }
-        }
-        
+
         .shimmer {
             background: linear-gradient(to right, #eeeeee 8%, #dddddd 18%, #eeeeee 33%);
             background-size: 800px 104px;
             animation: shimmer 1.5s infinite linear;
         }
-        
-        /* Aspect ratio buttons */
-        .aspect-btn {
-            transition: all 0.2s;
-        }
-        
-        .aspect-btn.active {
-            background-color: #4f46e5;
-            color: white;
-        }
-        
-        /* Style dropdown */
-        .style-dropdown {
-            display: none;
-            position: absolute;
-            background-color: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            z-index: 10;
-            width: 200px;
-            padding: 8px;
-        }
-        
-        .style-dropdown.show {
-            display: block;
-        }
-        
-        /* Video player overlay */
-        .video-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-        
-        .video-overlay.show {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
-        .video-container {
-            width: 80%;
-            max-width: 800px;
-            position: relative;
-        }
-        
-        .close-video {
-            position: absolute;
-            top: -40px;
-            right: 0;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
-        
-        /* Image hover effects */
-        .image-container {
-            position: relative;
-            overflow: hidden;
-            border-radius: 8px;
-        }
-        
-        .image-actions {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-            padding: 16px 8px 8px;
-            transform: translateY(100%);
-            transition: transform 0.2s;
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .image-container:hover .image-actions {
-            transform: translateY(0);
-        }
-        
-        /* Loading spinner */
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
     </style>
 </head>
-<body class="gradient-bg min-h-screen flex flex-col">
-    <!-- Header -->
-    <header class="bg-white shadow-sm py-4 px-6 flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
-                <i class="fas fa-magic text-white"></i>
-            </div>
-            <h1 class="text-xl font-bold text-gray-800">Imagify AI</h1>
-        </div>
-        <div class="flex items-center space-x-4">
-            <button class="text-gray-500 hover:text-gray-700 transition">
-                <i class="fas fa-history"></i>
-            </button>
-            <button class="text-gray-500 hover:text-gray-700 transition">
-                <i class="fas fa-user"></i>
-            </button>
-        </div>
-    </header>
 
-    <!-- Main content -->
-    <div class="flex-1 overflow-hidden flex flex-col max-w-7xl w-full mx-auto p-4">
-        <!-- Generation controls -->
-        <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
-            <div class="flex flex-col md:flex-row md:items-end gap-4">
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Describe what you want to generate</label>
-                    <div class="relative">
-                        <textarea id="prompt-input" 
-                            class="w-full p-3 pr-12 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none"
-                            placeholder="A futuristic cityscape at sunset with flying cars, digital art" 
-                            rows="2"></textarea>
-                        <button id="generate-btn" 
-                            class="absolute right-3 bottom-3 px-4 py-1 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                            Generate
-                        </button>
-                    </div>
-                </div>
-                <div class="flex flex-col">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Style</label>
-                    <div class="relative">
-                        <button id="style-toggle" class="flex items-center justify-between w-full md:w-48 px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
-                            <span>Digital Art</span>
-                            <i class="fas fa-chevron-down text-xs"></i>
-                        </button>
-                        <div id="style-dropdown" class="style-dropdown">
-                            <div class="grid grid-cols-2 gap-2">
-                                <button class="style-option px-3 py-2 text-left rounded hover:bg-gray-100" data-style="digital-art">
-                                    <i class="fas fa-paint-brush mr-2"></i> Digital Art
-                                </button>
-                                <button class="style-option px-3 py-2 text-left rounded hover:bg-gray-100" data-style="photorealistic">
-                                    <i class="fas fa-camera mr-2"></i> Photorealistic
-                                </button>
-                                <button class="style-option px-3 py-2 text-left rounded hover:bg-gray-100" data-style="anime">
-                                    <i class="fas fa-moon mr-2"></i> Anime
-                                </button>
-                                <button class="style-option px-3 py-2 text-left rounded hover:bg-gray-100" data-style="watercolor">
-                                    <i class="fas fa-water mr-2"></i> Watercolor
-                                </button>
-                                <button class="style-option px-3 py-2 text-left rounded hover:bg-gray-100" data-style="3d-render">
-                                    <i class="fas fa-cube mr-2"></i> 3D Render
-                                </button>
-                                <button class="style-option px-3 py-2 text-left rounded hover:bg-gray-100" data-style="pixel-art">
-                                    <i class="fas fa-gamepad mr-2"></i> Pixel Art
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-4 flex flex-wrap gap-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Aspect Ratio</label>
-                <div class="flex gap-2">
-                    <button class="aspect-btn px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200 active" data-ratio="1:1">
-                        1:1
-                    </button>
-                    <button class="aspect-btn px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200" data-ratio="4:3">
-                        4:3
-                    </button>
-                    <button class="aspect-btn px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200" data-ratio="16:9">
-                        16:9
-                    </button>
-                    <button class="aspect-btn px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200" data-ratio="9:16">
-                        9:16
-                    </button>
-                </div>
-            </div>
+<body class="gradient-bg min-h-screen flex flex-col">
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col items-center justify-center p-6">
+        <div class="bg-white rounded-xl shadow-sm p-5 w-full max-w-xl">
+            <label for="style-select" class="block text-sm font-medium text-gray-700 mb-2">Choose Style</label>
+            <select id="style-select" class="w-full p-2 border border-gray-300 rounded-lg mb-4">
+                <option value="realistic">Photorealistic</option>
+                <option value="anime">Anime</option>
+                <option value="digital-art">Digital Art</option>
+                <option value="pixel-art">Pixel Art</option>
+                <option value="watercolor">Watercolor</option>
+            </select>
+
+            <label for="prompt-input" class="block text-sm font-medium text-gray-700 mb-2">Describe the Image</label>
+            <textarea id="prompt-input" rows="3"
+                class="w-full p-3 border border-gray-300 rounded-lg mb-4"
+                placeholder="e.g., A realistic mountain landscape with a clear blue sky"></textarea>
+
+            <button id="generate-btn"
+                class="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                Generate Image
+            </button>
         </div>
-        
-        <!-- Generation status -->
-        <div id="generation-status" class="hidden bg-white rounded-xl shadow-sm p-4 mb-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <div class="spinner"></div>
-                    <span class="text-gray-700">Generating 4 images...</span>
-                </div>
-                <button id="cancel-generation" class="text-sm text-gray-500 hover:text-gray-700">
-                    Cancel
-                </button>
-            </div>
-            <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="shimmer rounded-lg" style="aspect-ratio: 1/1;"></div>
-                <div class="shimmer rounded-lg" style="aspect-ratio: 1/1;"></div>
-                <div class="shimmer rounded-lg" style="aspect-ratio: 1/1;"></div>
-                <div class="shimmer rounded-lg" style="aspect-ratio: 1/1;"></div>
-            </div>
+
+        <div id="image-results" class="mt-8 grid grid-cols-1 gap-6 w-full max-w-4xl">
+            <!-- Generated images will appear here -->
         </div>
-        
-        <!-- Gallery -->
-        <div class="flex-1 overflow-y-auto custom-scrollbar">
-            <h2 class="text-lg font-semibold text-gray-800 mb-3">Your Creations</h2>
-            
-            <div id="image-gallery" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <!-- Sample generated images -->
-                <div class="message-animation">
-                    <div class="image-container group">
-                        <img src="https://source.unsplash.com/random/512x512/?futuristic,city" alt="Generated image" class="w-full h-auto rounded-lg">
-                        <div class="image-actions">
-                            <button class="video-btn px-3 py-1 bg-white text-gray-800 rounded-full flex items-center space-x-1 text-sm">
-                                <i class="fas fa-video"></i>
-                                <span>Animate</span>
-                            </button>
-                            <button class="download-btn px-3 py-1 bg-white text-gray-800 rounded-full flex items-center space-x-1 text-sm">
-                                <i class="fas fa-download"></i>
-                                <span>Download</span>
-                            </button>
-                        </div>
-                    </div>
-                    <p class="mt-2 text-sm text-gray-600 truncate">A futuristic cityscape at sunset with flying cars</p>
-                </div>
-                
-                <div class="message-animation">
-                    <div class="image-container group">
-                        <img src="https://source.unsplash.com/random/512x512/?fantasy,castle" alt="Generated image" class="w-full h-auto rounded-lg">
-                        <div class="image-actions">
-                            <button class="video-btn px-3 py-1 bg-white text-gray-800 rounded-full flex items-center space-x-1 text-sm">
-                                <i class="fas fa-video"></i>
-                                <span>Animate</span>
-                            </button>
-                            <button class="download-btn px-3 py-1 bg-white text-gray-800 rounded-full flex items-center space-x-1 text-sm">
-                                <i class="fas fa-download"></i>
-                                <span>Download</span>
-                            </button>
-                        </div>
-                    </div>
-                    <p class="mt-2 text-sm text-gray-600 truncate">A magical floating castle in the clouds</p>
-                </div>
-                
-                <div class="message-animation">
-                    <div class="image-container group">
-                        <img src="https://source.unsplash.com/random/512x512/?cyberpunk,neon" alt="Generated image" class="w-full h-auto rounded-lg">
-                        <div class="image-actions">
-                            <button class="video-btn px-3 py-1 bg-white text-gray-800 rounded-full flex items-center space-x-1 text-sm">
-                                <i class="fas fa-video"></i>
-                                <span>Animate</span>
-                            </button>
-                            <button class="download-btn px-3 py-1 bg-white text-gray-800 rounded-full flex items-center space-x-1 text-sm">
-                                <i class="fas fa-download"></i>
-                                <span>Download</span>
-                            </button>
-                        </div>
-                    </div>
-                    <p class="mt-2 text-sm text-gray-600 truncate">Cyberpunk street with neon signs and rain</p>
-                </div>
-                
-                <div class="message-animation">
-                    <div class="image-container group">
-                        <img src="https://source.unsplash.com/random/512x512/?portrait,fantasy" alt="Generated image" class="w-full h-auto rounded-lg">
-                        <div class="image-actions">
-                            <button class="video-btn px-3 py-1 bg-white text-gray-800 rounded-full flex items-center space-x-1 text-sm">
-                                <i class="fas fa-video"></i>
-                                <span>Animate</span>
-                            </button>
-                            <button class="download-btn px-3 py-1 bg-white text-gray-800 rounded-full flex items-center space-x-1 text-sm">
-                                <i class="fas fa-download"></i>
-                                <span>Download</span>
-                            </button>
-                        </div>
-                    </div>
-                    <p class="mt-2 text-sm text-gray-600 truncate">Fantasy elf warrior portrait with glowing eyes</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Video overlay -->
-    <div id="video-overlay" class="video-overlay">
-        <div class="video-container">
-            <span class="close-video"><i class="fas fa-times"></i></span>
-            <video id="generated-video" controls class="w-full rounded-lg">
-                <source src="" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <div class="mt-4 flex justify-between items-center">
-                <span class="text-white text-sm">Generated animation (12s)</span>
-                <button id="download-video" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
-                    <i class="fas fa-download"></i>
-                    <span>Download</span>
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Video generation modal -->
-    <div id="video-generation-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-6 max-w-md w-full">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">Animate Image</h3>
-                <button id="close-video-modal" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Animation Style</label>
-                <select id="animation-style" class="w-full p-2 border border-gray-300 rounded-lg">
-                    <option value="pan-left">Pan Left</option>
-                    <option value="pan-right">Pan Right</option>
-                    <option value="zoom-in">Zoom In</option>
-                    <option value="zoom-out">Zoom Out</option>
-                    <option value="3d-rotation">3D Rotation</option>
-                </select>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-                <div class="flex items-center space-x-2">
-                    <input type="range" id="duration-slider" min="3" max="15" value="12" class="w-full">
-                    <span id="duration-value" class="text-sm text-gray-600">12s</span>
-                </div>
-            </div>
-            
-            <div class="flex justify-end space-x-3">
-                <button id="cancel-animation" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                    Cancel
-                </button>
-                <button id="start-animation" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center space-x-2">
-                    <i class="fas fa-play"></i>
-                    <span>Generate</span>
-                </button>
-            </div>
-        </div>
-    </div>
+    </main>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', () => {
+            const styleSelect = document.getElementById('style-select');
             const promptInput = document.getElementById('prompt-input');
             const generateBtn = document.getElementById('generate-btn');
-            const generationStatus = document.getElementById('generation-status');
-            const imageGallery = document.getElementById('image-gallery');
-            const styleToggle = document.getElementById('style-toggle');
-            const styleDropdown = document.getElementById('style-dropdown');
-            const aspectBtns = document.querySelectorAll('.aspect-btn');
-            const videoOverlay = document.getElementById('video-overlay');
-            const generatedVideo = document.getElementById('generated-video');
-            const closeVideoBtn = document.querySelector('.close-video');
-            const downloadVideoBtn = document.getElementById('download-video');
-            const videoGenerationModal = document.getElementById('video-generation-modal');
-            const closeVideoModalBtn = document.getElementById('close-video-modal');
-            const cancelAnimationBtn = document.getElementById('cancel-animation');
-            const startAnimationBtn = document.getElementById('start-animation');
-            const durationSlider = document.getElementById('duration-slider');
-            const durationValue = document.getElementById('duration-value');
-            
-            let currentImageForAnimation = null;
-            let selectedStyle = 'digital-art';
-            let selectedAspectRatio = '1:1';
-            
-            // Auto-resize textarea
-            promptInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
-            });
-            
-            // Style dropdown toggle
-            styleToggle.addEventListener('click', function() {
-                styleDropdown.classList.toggle('show');
-            });
-            
-            // Close style dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!styleToggle.contains(e.target) && !styleDropdown.contains(e.target)) {
-                    styleDropdown.classList.remove('show');
-                }
-            });
-            
-            // Style selection
-            document.querySelectorAll('.style-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    selectedStyle = this.dataset.style;
-                    styleToggle.querySelector('span').textContent = this.textContent.trim();
-                    styleDropdown.classList.remove('show');
-                    
-                    // Update active style in dropdown
-                    document.querySelectorAll('.style-option').forEach(opt => {
-                        opt.classList.remove('bg-indigo-100', 'text-indigo-800');
-                    });
-                    this.classList.add('bg-indigo-100', 'text-indigo-800');
-                });
-            });
-            
-            // Aspect ratio selection
-            aspectBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    selectedAspectRatio = this.dataset.ratio;
-                    
-                    // Update active state
-                    aspectBtns.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-            
-            // Generate images
-            generateBtn.addEventListener('click', function() {
+            const imageResults = document.getElementById('image-results');
+
+            // Generate images based on selected style and prompt
+            generateBtn.addEventListener('click', () => {
+                const style = styleSelect.value;
                 const prompt = promptInput.value.trim();
-                if (prompt === '') return;
-                
-                // Show generation status
-                generationStatus.classList.remove('hidden');
-                
-                // Simulate generation delay
-                setTimeout(() => {
-                    generationStatus.classList.add('hidden');
-                    addGeneratedImages(prompt);
-                }, 2000 + Math.random() * 3000);
-            });
-            
-            // Add generated images to gallery
-            function addGeneratedImages(prompt) {
-                // Create 4 sample images (in a real app, these would come from an API)
-                for (let i = 0; i < 4; i++) {
-                    const seed = Math.floor(Math.random() * 1000000);
-                    const width = 512;
-                    const height = 512;
-                    
-                    // This is a placeholder service - in a real app you would call your image generation API
-                    const placeholderUrl = `https://source.unsplash.com/random/${width}x${height}/?${encodeURIComponent(prompt)}&seed=${seed}`;
-                    
-                    const imageDiv = document.createElement('div');
-                    imageDiv.className = 'message-animation';
-                    imageDiv.innerHTML = `
-                        <div class="image-container group">
-                            <img src="${placeholderUrl}" alt="Generated image: ${prompt}" class="w-full h-auto rounded-lg">
-                            <div class="image-actions">
-                                <button class="video-btn px-3 py-1 bg-white text-gray-800 rounded-full flex items-center space-x-1 text-sm">
-                                    <i class="fas fa-video"></i>
-                                    <span>Animate</span>
-                                </button>
-                                <button class="download-btn px-3 py-1 bg-white text-gray-800 rounded-full flex items-center space-x-1 text-sm">
-                                    <i class="fas fa-download"></i>
-                                    <span>Download</span>
-                                </button>
-                            </div>
-                        </div>
-                        <p class="mt-2 text-sm text-gray-600 truncate">${prompt}</p>
-                    `;
-                    
-                    // Add to beginning of gallery
-                    imageGallery.insertBefore(imageDiv, imageGallery.firstChild);
-                    
-                    // Add event listeners for the new buttons
-                    imageDiv.querySelector('.video-btn').addEventListener('click', function() {
-                        openVideoGenerationModal(imageDiv.querySelector('img'));
-                    });
-                    
-                    imageDiv.querySelector('.download-btn').addEventListener('click', function() {
-                        alert('In a real application, this would download the image. This is a simulation.');
-                    });
+
+                if (!prompt) {
+                    alert('Please enter a description for the image.');
+                    return;
                 }
+
+                // Simulate image generation
+                imageResults.innerHTML = ''; // Clear previous results
+                for (let i = 0; i < 4; i++) {
+                    const imageUrl = generateImageUrl(prompt, style, i); // Dynamic URL
+                    const imageCard = createImageCard(imageUrl, prompt, style);
+                    imageResults.appendChild(imageCard);
+                }
+            });
+
+            // Function to simulate an image URL based on prompt and style
+            function generateImageUrl(prompt, style, index) {
+                const encodedPrompt = encodeURIComponent(prompt);
+                return `https://source.unsplash.com/random/512x512/?${style},${encodedPrompt}&seed=${index}`;
             }
-            
-            // Open video generation modal
-            function openVideoGenerationModal(imgElement) {
-                currentImageForAnimation = imgElement;
-                videoGenerationModal.classList.remove('hidden');
+
+            // Function to create an image card
+            function createImageCard(imageUrl, prompt, style) {
+                const card = document.createElement('div');
+                card.classList.add('bg-white', 'rounded-xl', 'shadow-sm', 'p-4');
+
+                card.innerHTML = `
+                    <img src="${imageUrl}" alt="${prompt} (${style})" class="w-full h-auto rounded-lg mb-4">
+                    <p class="text-sm text-gray-600 truncate">${prompt}</p>
+                    <p class="text-xs text-gray-400">Style: ${style}</p>
+                `;
+                return card;
             }
-            
-            // Close video generation modal
-            function closeVideoGenerationModal() {
-                videoGenerationModal.classList.add('hidden');
-            }
-            
-            // Update duration display
-            durationSlider.addEventListener('input', function() {
-                durationValue.textContent = this.value + 's';
-            });
-            
-            // Start animation generation
-            startAnimationBtn.addEventListener('click', function() {
-                const animationStyle = document.getElementById('animation-style').value;
-                const duration = durationSlider.value;
-                
-                closeVideoGenerationModal();
-                
-                // Show loading state on the image
-                const originalSrc = currentImageForAnimation.src;
-                currentImageForAnimation.src = '';
-                currentImageForAnimation.classList.add('shimmer');
-                
-                // Simulate video generation
-                setTimeout(() => {
-                    // Restore image
-                    currentImageForAnimation.src = originalSrc;
-                    currentImageForAnimation.classList.remove('shimmer');
-                    
-                    // Show video overlay with sample video
-                    generatedVideo.src = 'https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4';
-                    videoOverlay.classList.add('show');
-                    generatedVideo.play();
-                }, 3000);
-            });
-            
-            // Close video overlay
-            closeVideoBtn.addEventListener('click', function() {
-                videoOverlay.classList.remove('show');
-                generatedVideo.pause();
-                generatedVideo.currentTime = 0;
-            });
-            
-            // Download video
-            downloadVideoBtn.addEventListener('click', function() {
-                alert('In a real application, this would download the video. This is a simulation.');
-            });
-            
-            // Close video modal buttons
-            closeVideoModalBtn.addEventListener('click', closeVideoGenerationModal);
-            cancelAnimationBtn.addEventListener('click', closeVideoGenerationModal);
-            
-            // Add event listeners to existing sample images
-            document.querySelectorAll('.video-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    openVideoGenerationModal(this.closest('.image-container').querySelector('img'));
-                });
-            });
-            
-            document.querySelectorAll('.download-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    alert('In a real application, this would download the image. This is a simulation.');
-                });
-            });
         });
     </script>
 </body>
+
 </html>
